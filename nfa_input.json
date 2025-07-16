@@ -1,0 +1,12 @@
+{
+  "type": "NFA",
+  "name": "converted_dfa.json",
+  "numOfStates": 4,
+  "numOfAlphabet": 3,
+  "numOfAcceptingStates": 1,
+  "states": ["q0", "q1", "q2", "q3"],
+  "startState": "q0",
+  "alphabet": ["a", "b", "e"],
+  "acceptingStates": ["q3"],
+  "transitions": [["q0", "a", "q0"], ["q0", "b", "q0"], ["q0", "e", "q1"], ["q1", "a", "q2"], ["q2", "b", "q3"], ["q3", "a", "q3"], ["q3", "b", "q3"]]
+}
