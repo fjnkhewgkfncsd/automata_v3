@@ -551,6 +551,7 @@ class DFA : public FiniteAutoMaton {
             } else {
                 cout << " Failed to save DFA to database!" << endl;
             }
+            pauseAndClear();
         }
         
         void loadFromDatabase(int id) override {
@@ -633,8 +634,13 @@ class DFA : public FiniteAutoMaton {
             
         set<string> jsonArrayTostate(const json& jarr){
             set<string> result;
-            for(const auto& item : jarr){
-                result.insert(item.get<string>());
+            if (jarr.is_array()) {
+                for(const auto& item : jarr){
+                    if(item.is_string())
+                        result.insert(item.get<string>());
+                }
+            } else if (jarr.is_string()) {
+                result.insert(jarr.get<string>());
             }
             return result;
         }
@@ -653,24 +659,29 @@ class DFA : public FiniteAutoMaton {
             stateCounter = 0;
             
             for(const auto& stateGroup : j["states"]){
-                set<string> s = jsonArrayTostate(stateGroup);
+                set<string> s = flattenStateJson(stateGroup);
                 string stateName = getDFAStateName(s);
                 states.insert(stateName);
             }
-            set<string> startset = jsonArrayTostate(j["startStart"]);
-            startState = getDFAStateName(startset);
-            states.insert(startState);
+
+            if (j.contains("startState") || j.contains("startStart")) {
+                const auto& startJson = j.contains("startState") ? j["startState"] : j["startStart"];
+                set<string> startset = flattenStateJson(startJson);
+                startState = getDFAStateName(startset);
+                states.insert(startState);
+            }
 
             for(const auto& acc : j["acceptingStates"]){
-                set<string> s = jsonArrayTostate(acc);
+                set<string> s = flattenStateJson(acc);
                 string accName = getDFAStateName(s);
                 acceptingStates.insert(accName);
                 states.insert(accName);
             }
+
             for (const auto& trans : j["transitions"]) {
-                set<string> fromState = jsonArrayTostate(trans["from"]);
+                set<string> fromState = flattenStateJson(trans["from"]);
                 char symbol = trans["symbol"].get<string>()[0];
-                set<string> toState = jsonArrayTostate(trans["to"]);
+                set<string> toState = flattenStateJson(trans["to"]);
 
                 string fromName = getDFAStateName(fromState);
                 string toName = getDFAStateName(toState);
@@ -700,6 +711,18 @@ class DFA : public FiniteAutoMaton {
             numOfStates = states.size();
             numOfAlphabet = alphabets.size();
             numOfAcceptingStates = acceptingStates.size();
+        }
+        set<string> flattenStateJson(const json& j) {
+            set<string> result;
+            if (j.is_string()) {
+                result.insert(j.get<string>());
+            } else if (j.is_array()) {
+                for (const auto& elem : j) {
+                    set<string> sub = flattenStateJson(elem);
+                    result.insert(sub.begin(), sub.end());
+                }
+            }
+            return result;
         }
         void handleInputForDFA(){
             cout << "======== Designing DFA =========" << endl;
@@ -1093,6 +1116,7 @@ class NFA : public FiniteAutoMaton {
             } else {
                 cout << " Failed to save NFA to database!" << endl;
             }
+            pauseAndClear();
         }
         
         void loadFromDatabase(int id) override {
@@ -1782,12 +1806,12 @@ void minimizeMenu(){
     cout << " Minimizing DFA..." << endl;
     int result = system(command.c_str());
     if(result == 0){
-        cout << " DFA minimized successfully!" << endl;
         DFA minimizedDFA;
         ifstream input("minimized.json");
         if(!input){
             cerr << "error : cannot open minimized_dfa.json";
         }
+        pauseAndClear();
         json j;
         input >> j;
         minimizedDFA.extractFromJson(j);
@@ -1798,6 +1822,8 @@ void minimizeMenu(){
         cin >> saveChoice;
         if(saveChoice == 'y' || saveChoice == 'Y') {
             minimizedDFA.saveToDatabase();
+        }else{
+            pauseAndClear();
         }
     } else {
         cout << " Failed to minimize DFA!" << endl;
@@ -1870,7 +1896,6 @@ void handleUserInputForMenu() {
                 cout << " Converting NFA to DFA..." << endl;
                 int result = system(command.c_str());
                 if(result == 0) {
-                    cout << " NFA converted to DFA successfully!" << endl;
                     DFA dfa;
                     ifstream input("dfa_output.json");
                     if(!input){
@@ -1881,11 +1906,14 @@ void handleUserInputForMenu() {
                     dfa.extractFromJson(j);
                     remove(tempFile.c_str());
                     remove("dfa_output.json");
+                    pauseAndClear();
                     cout << "do you want to save this DFA to database? (y/n): ";
                     char saveChoice;
                     cin >> saveChoice;
                     if(saveChoice == 'y' || saveChoice == 'Y') {
                         dfa.saveToDatabase();
+                    }else if(saveChoice == 'n' || saveChoice == 'N') {
+                        pauseAndClear();
                     }
                 } else {
                     cout << " Failed to convert NFA to DFA!" << endl;

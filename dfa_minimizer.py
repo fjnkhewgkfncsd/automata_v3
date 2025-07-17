@@ -95,7 +95,7 @@ if __name__ == "__main__":
     with open("minimized.json", "w") as f:
         json.dump(result, f, indent=4)
     print_automaton(partitions, new_start, new_finals, new_transitions, "Minimized DFA")
-    
+    print("DFA minimized successfully!")
     show_png = input("Would you like to show the visualization? (y/n): ").lower()
     if show_png == 'y':
         display_automaton(partitions, new_start, new_finals, new_transitions, "Minimized_DFA")

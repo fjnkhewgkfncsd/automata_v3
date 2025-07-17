@@ -76,7 +76,7 @@ if __name__ == "__main__":
     dfa_states, initial_state, dfa_finals, dfa_transitions = convert_nfa_to_dfa(states, start, finals, transitions) 
     result = {
         "states": [list(s) for s in dfa_states],
-        "startStart": list(initial_state),
+        "startState": list(initial_state),
         "acceptingStates": [list(s) for s in dfa_finals],
         "transitions": [
             {"from": list(k[0]), "symbol": k[1], "to": list(v)}
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     }  
     with open("dfa_output.json", "w") as f:
         json.dump(result, f, indent=2)
-
+    print("Converted NFA to DFA successfully!")
     print_automaton(dfa_states, initial_state, dfa_finals, dfa_transitions, "Converted DFA")    
     show_png = input("Would you like to show the visualization? (y/n): ").lower()
     if show_png == 'y':
