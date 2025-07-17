@@ -12,8 +12,10 @@
 #include <thread>
 #include <windows.h>
 #include<unistd.h>
+#include "json.hpp"
 
 using namespace std;
+using json = nlohmann::json;
 
 void clearScreen() {
     #ifdef _WIN32
@@ -158,39 +160,39 @@ class FiniteAutoMaton {
                     cout << " Error: Invalid JSON format" << endl;
                     return faTypes;
                 }
-        string jsonArray = result.substr(arrayStart + 1, arrayEnd - arrayStart - 1);
-        size_t pos = 0;
-        
-        while ((pos = jsonArray.find('{', pos)) != string::npos) {
-            size_t endPos = jsonArray.find('}', pos);
-            if (endPos == string::npos) break;
+                string jsonArray = result.substr(arrayStart + 1, arrayEnd - arrayStart - 1);
+                size_t pos = 0;
+                
+                while ((pos = jsonArray.find('{', pos)) != string::npos) {
+                    size_t endPos = jsonArray.find('}', pos);
+                    if (endPos == string::npos) break;
 
-            string item = jsonArray.substr(pos, endPos - pos + 1);
-            
-            string idStr = extractField(item, "id");
-            string type = extractField(item, "type");
-            string name = extractField(item, "name");
+                    string item = jsonArray.substr(pos, endPos - pos + 1);
+                    
+                    string idStr = extractField(item, "id");
+                    string type = extractField(item, "type");
+                    string name = extractField(item, "name");
 
-            if (!idStr.empty()){
-                int id = stoi(idStr);
-                faTypes[id] = type.empty() ? "DFA" : type; // Default to DFA if empty
+                    if (!idStr.empty()){
+                        int id = stoi(idStr);
+                        faTypes[id] = type.empty() ? "DFA" : type; // Default to DFA if empty
+                    }
+                    // Print clean formatted row
+                    cout << left << setw(6) << idStr << "| "
+                        << setw(8) << type << "| "
+                        << name << endl;
+
+                    pos = endPos + 1;
+                }
+                cout << string(50, '=') << endl;
+                
+            } catch (const exception& e) {
+                cout << " Error parsing response: " << e.what() << endl;
+            } catch (...) {
+                cout << " Unknown error parsing response" << endl;
             }
-            // Print clean formatted row
-            cout << left << setw(6) << idStr << "| "
-                 << setw(8) << type << "| "
-                 << name << endl;
-
-            pos = endPos + 1;
+            return faTypes;
         }
-        cout << string(50, '=') << endl;
-        
-    } catch (const exception& e) {
-        cout << "❌ Error parsing response: " << e.what() << endl;
-    } catch (...) {
-        cout << "❌ Unknown error parsing response" << endl;
-    }
-    return faTypes;
-}
 
 
 // Clean extractField function without debug
@@ -216,7 +218,8 @@ string extractField(const string& json, const string& field) {
 class DFA : public FiniteAutoMaton {
     private: 
         map<pair<string,char>, string> transitions;
-        
+        int stateCounter = 0;
+        map<set<string>, string> dfaStateName;
     public:
         string toJSON(const string& name) const {
             stringstream json;
@@ -270,6 +273,78 @@ class DFA : public FiniteAutoMaton {
             json << "]\n";
             json << "}";
             return json.str();
+        }
+
+        void listAvailableDFA(){
+            string command = "python db_operation.py listDFA";
+            cout << "Loading available DFA..." << endl;
+            sleepFor(2000);
+            clearScreen();
+            FILE* pipe = popen(command.c_str(), "r");
+            if(!pipe){
+                cout << "Failed to execute Python script!" << endl;
+                return;
+            }
+            char buffer[1024];
+            string result;
+            while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+                result += buffer;
+            }
+            pclose(pipe);
+            if (result.find("EMPTY") != string::npos) {
+                cout << "No DFA found in database." << endl;
+                return;
+            }
+            try {
+                size_t automataStart = result.find("\"automata\":");
+                if (automataStart == string::npos) {
+                    cout << " Error: Could not find automata array in response" << endl;
+                    return ;
+                }
+
+                // Print clean header
+                cout << "\n Available DFA:" << endl;
+                cout << string(50, '=') << endl;
+                cout << left << setw(6) << "ID" << "| " 
+                    << setw(8) << "Type" << "| "
+                    << "Name" << endl;
+                cout << string(50, '=') << endl;
+
+                // Find array bounds
+                size_t arrayStart = result.find('[', automataStart);
+                size_t arrayEnd = result.find(']', arrayStart);
+                
+                if (arrayStart == string::npos || arrayEnd == string::npos) {
+                    cout << " Error: Invalid JSON format" << endl;
+                    return;
+                }
+                string jsonArray = result.substr(arrayStart + 1, arrayEnd - arrayStart - 1);
+                size_t pos = 0;
+                
+                while ((pos = jsonArray.find('{', pos)) != string::npos) {
+                    size_t endPos = jsonArray.find('}', pos);
+                    if (endPos == string::npos) break;
+
+                    string item = jsonArray.substr(pos, endPos - pos + 1);
+                    
+                    string idStr = extractField(item, "id");
+                    string type = extractField(item, "type");
+                    string name = extractField(item, "name");
+                    // Print clean formatted row
+                    cout << left << setw(6) << idStr << "| "
+                        << setw(8) << type << "| "
+                        << name << endl;
+
+                    pos = endPos + 1;
+                }
+                cout << string(50, '=') << endl;
+                
+            } catch (const exception& e) {
+                cout << " Error parsing response: " << e.what() << endl;
+            } catch (...) {
+                cout << " Unknown error parsing response" << endl;
+            }
+            return;
         }
         // Parse JSON and populate DFA
         bool fromJSON(const string& jsonFile) {
@@ -495,9 +570,9 @@ class DFA : public FiniteAutoMaton {
                         cout << " DFA loaded successfully from database!" << endl;
                         displayTransitions();
                     } else {
-                        cout << " Failed to parse loaded DFA data!" << endl;
+                        cout <<  " Failed to parse loaded DFA data!" << endl;
                     }
-                    // Cleanup
+                    
                     remove(tempFile.c_str());
                 } else {
                     cout << " DFA with ID " << id << " not found in database!" << endl;
@@ -555,6 +630,77 @@ class DFA : public FiniteAutoMaton {
         map<pair<string,char>, string>& getTransitions(){ return transitions; }
         const string& getStartState() const { return startState; }
         const set<string>& getAcceptingStates() const { return acceptingStates; }
+            
+        set<string> jsonArrayTostate(const json& jarr){
+            set<string> result;
+            for(const auto& item : jarr){
+                result.insert(item.get<string>());
+            }
+            return result;
+        }
+        
+        string getDFAStateName(const set<string>& s) {
+            if (dfaStateName.find(s) == dfaStateName.end()) {
+                dfaStateName[s] = "q" + to_string(stateCounter++);
+            }
+            return dfaStateName[s];
+        }
+        void extractFromJson(const json& j){
+            states.clear();
+            acceptingStates.clear();
+            transitions.clear();
+            dfaStateName.clear();
+            stateCounter = 0;
+            
+            for(const auto& stateGroup : j["states"]){
+                set<string> s = jsonArrayTostate(stateGroup);
+                string stateName = getDFAStateName(s);
+                states.insert(stateName);
+            }
+            set<string> startset = jsonArrayTostate(j["startStart"]);
+            startState = getDFAStateName(startset);
+            states.insert(startState);
+
+            for(const auto& acc : j["acceptingStates"]){
+                set<string> s = jsonArrayTostate(acc);
+                string accName = getDFAStateName(s);
+                acceptingStates.insert(accName);
+                states.insert(accName);
+            }
+            for (const auto& trans : j["transitions"]) {
+                set<string> fromState = jsonArrayTostate(trans["from"]);
+                char symbol = trans["symbol"].get<string>()[0];
+                set<string> toState = jsonArrayTostate(trans["to"]);
+
+                string fromName = getDFAStateName(fromState);
+                string toName = getDFAStateName(toState);
+
+                transitions[{fromName, symbol}] = toName;
+                states.insert(fromName);
+                states.insert(toName);
+            }
+            alphabets.clear();
+            if (j.contains("alphabet")) {
+                for (const auto& symbol : j["alphabet"]) {
+                    if (!symbol.is_null() && !symbol.get<string>().empty())
+                        alphabets.insert(symbol.get<string>()[0]);
+                }
+            } else if (j.contains("transitions")) {
+                // Extract unique symbols from transitions
+                for (const auto& trans : j["transitions"]) {
+                    if (trans.contains("symbol")) {
+                        string symbolStr = trans["symbol"].get<string>();
+                        if (!symbolStr.empty())
+                            alphabets.insert(symbolStr[0]);
+                    }
+                }
+            }
+
+            // 6. Update counts
+            numOfStates = states.size();
+            numOfAlphabet = alphabets.size();
+            numOfAcceptingStates = acceptingStates.size();
+        }
         void handleInputForDFA(){
             cout << "======== Designing DFA =========" << endl;
             cout << "Enter number of states : ";
@@ -646,7 +792,7 @@ class DFA : public FiniteAutoMaton {
                 pauseAndClear();
             // Save to database
             char saveChoice;
-            cout << "\n💾 Do you want to save this DFA to database? (y/n): ";
+            cout << "\n Do you want to save this DFA to database? (y/n): ";
             cin >> saveChoice;
             if(saveChoice == 'y' || saveChoice == 'Y') {
                 saveToDatabase();
@@ -1069,7 +1215,7 @@ void listAvailableNFA(){
         }
 
         // Print clean header
-        cout << "\n Available Finite Automata:" << endl;
+        cout << "\n Available NFA:" << endl;
         cout << string(50, '=') << endl;
         cout << left << setw(6) << "ID" << "| " 
             << setw(8) << "Type" << "| "
@@ -1098,8 +1244,8 @@ void listAvailableNFA(){
             string name = extractField(item, "name");
             // Print clean formatted row
             cout << left << setw(6) << idStr << "| "
-                 << setw(8) << type << "| "
-                 << name << endl;
+                << setw(8) << type << "| "
+                << name << endl;
 
             pos = endPos + 1;
         }
@@ -1372,6 +1518,7 @@ void printStateSet(const set<string>& states) {
 };
 
 void menu() {
+    // clearScreen();
     cout << "\n" << string(40, '=') << endl;
     cout << "     FINITE AUTOMATON SIMULATOR" << endl;
     cout << string(40, '=') << endl;
@@ -1614,7 +1761,48 @@ void simulateMenu() {
     pauseAndClear();
 }
 
-
+void minimizeMenu(){
+    cout << "======= Minimize DFA ========"<< endl;
+    DFA tempDFA;
+    tempDFA.listAvailableDFA();
+    cout << "Enter DFA's TD to Minimize: ";
+    int dfaId;
+    cin >> dfaId;
+    tempDFA.loadFromDatabase(dfaId);
+    string jsonData = tempDFA.toJSON("minimized_dfa.json");
+    string tempFile = "dfa_input.json";
+    ofstream jsonFile(tempFile);
+    if(!jsonFile.is_open()){
+        cout << " Failed to create temporary JSON file!" << endl;
+        return;
+    }
+    jsonFile << jsonData;
+    jsonFile.close();
+    string command = "python dfa_minimizer.py";
+    cout << " Minimizing DFA..." << endl;
+    int result = system(command.c_str());
+    if(result == 0){
+        cout << " DFA minimized successfully!" << endl;
+        DFA minimizedDFA;
+        ifstream input("minimized.json");
+        if(!input){
+            cerr << "error : cannot open minimized_dfa.json";
+        }
+        json j;
+        input >> j;
+        minimizedDFA.extractFromJson(j);
+        remove(tempFile.c_str());
+        remove("minimized.json");
+        cout << "Do you want to save this minimized DFA to database? (y/n): ";
+        char saveChoice;
+        cin >> saveChoice;
+        if(saveChoice == 'y' || saveChoice == 'Y') {
+            minimizedDFA.saveToDatabase();
+        }
+    } else {
+        cout << " Failed to minimize DFA!" << endl;
+    }
+}
 
 void handleUserInputForMenu() {
     int choice;
@@ -1684,7 +1872,13 @@ void handleUserInputForMenu() {
                 if(result == 0) {
                     cout << " NFA converted to DFA successfully!" << endl;
                     DFA dfa;
-                    dfa.fromJSON("dfa_output.json");
+                    ifstream input("dfa_output.json");
+                    if(!input){
+                        cerr << "error : cannot open dfa.json";
+                    }
+                    json j;
+                    input >> j;
+                    dfa.extractFromJson(j);
                     remove(tempFile.c_str());
                     remove("dfa_output.json");
                     cout << "do you want to save this DFA to database? (y/n): ";
@@ -1705,7 +1899,9 @@ void handleUserInputForMenu() {
                 break;
             }
             case 5: {
-                cout << " Minimize DFA - Feature coming soon!" << endl;
+                sleepFor(500);
+                clearScreen();
+                minimizeMenu();
                 break;
             }
             case 0: {

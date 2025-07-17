@@ -43,6 +43,15 @@
         "sstream": "cpp",
         "stdexcept": "cpp",
         "streambuf": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "chrono": "cpp",
+        "cstring": "cpp",
+        "forward_list": "cpp",
+        "any": "cpp",
+        "optional": "cpp",
+        "ratio": "cpp",
+        "string_view": "cpp",
+        "thread": "cpp",
+        "valarray": "cpp"
     }
 }

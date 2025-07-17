@@ -123,6 +123,29 @@ def insert_fa(json_file, db_config):
         if 'db' in locals():
             db.close()
 
+
+def list_DFA(db_config):
+    try:
+        db = mysql.connector.connect(**db_config)
+        cursor = db.cursor(dictionary=True)
+
+        cursor.execute("SELECT automaton_id,name,type FROM automata WHERE type = 'DFA' order by automaton_id")
+
+        automata = cursor.fetchall()
+        if not automata:
+            print("Empty")
+            return None
+        
+        return automata
+    except mysql.connector.Error as err:
+        print(f"here ERROR: {err}")
+        return None
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'db' in locals():
+            db.close()
+
 def list_fa(db_config):
     try:
         db = mysql.connector.connect(**db_config)
@@ -346,7 +369,29 @@ if __name__ == "__main__":
                 sys.exit(1)
         except Exception as e:
             print(f"ERROR: {e}")
-            sys.exit(1)    
+            sys.exit(1)
+    elif command == "listDFA":
+        try:
+            automata = list_DFA(db_config)
+            if automata:
+                result = {
+                    "automata": [
+                        {
+                            "id": str(row["automaton_id"]),
+                            "name": row["name"],
+                            "type": row["type"]
+                        }
+                        for row in automata
+                    ]
+                }
+                print(json.dumps(result))
+                sys.exit(0)
+            else:
+                print(f"Empty")
+                sys.exit(1)
+        except Exception as e:
+            print(f"ERROR: {e}")
+            sys.exit(1)                        
     else:
         print("Unknown command. Use 'insert' or 'load'")
         sys.exit(1)
