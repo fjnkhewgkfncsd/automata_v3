@@ -1,5 +1,5 @@
 from typing import Dict, Tuple, FrozenSet, Set, Optional, Any
-
+import json;
 # Conditional import and type handling
 GRAPHVIZ_AVAILABLE = False
 GraphType = Any  # Default type
@@ -90,3 +90,21 @@ def print_automaton(
     print("\nTransitions:")
     for (from_state, symbol), to_state in sorted(transitions.items(), key=lambda x: (sorted(format_state(x[0][0])), x[0][1])):
         print(f"{{ {format_state(from_state)} }} --[{symbol}]--> {{ {format_state(to_state)} }}")
+
+if __name__ == "__main__":
+    with open("dfa.json") as f:
+        data = json.load(f)
+    states = set(data["states"])    
+    start = data["startState"]
+    finals = set(data["acceptingStates"])
+    name = data["name"]
+    transitions = {}
+    for from_state, symbol, to_state in data["transitions"]:
+        transitions[(frozenset({from_state}), symbol)] = frozenset({to_state})
+
+    frozen_states = {frozenset({s}) for s in states}
+    frozen_start = frozenset({start})
+    frozen_finals = {frozenset({f}) for f in finals}     
+            
+    display_automaton(frozen_states, frozen_start, frozen_finals, transitions, name)
+    print("DFA displayed successfully!")

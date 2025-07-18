@@ -110,6 +110,9 @@ class FiniteAutoMaton {
         virtual void setNumOfAcceptingState(int num){
             numOfAcceptingStates = num;
         }
+        virtual void displayStartState() const {
+            cout << "Start State: " << startState << endl;
+        }
         virtual int getNumOfAcceptingState(){
             return numOfAcceptingStates;
         }
@@ -517,7 +520,24 @@ class DFA : public FiniteAutoMaton {
                 return false;
             }
         }
-        
+        void displayAcceptingStates() const {
+            for(const auto& state : acceptingStates){
+                cout << state << " "; 
+            }
+        }
+
+        void getDetails(){
+            cout << "States : ";
+            displayState();
+            cout << endl;
+            displayStartState();
+            cout << "Symbols : " ;
+            displaySymbol();
+            cout << endl;
+            cout << "Accepting states : ";
+            displayAcceptingStates();
+            displayTransitions();
+        }
         void saveToDatabase() override {
             string dfaName;
             cout << "Enter a name for this DFA: ";
@@ -1815,6 +1835,25 @@ void minimizeMenu(){
         json j;
         input >> j;
         minimizedDFA.extractFromJson(j);
+        cout << "Minimized DFA details:" << endl;
+        minimizedDFA.getDetails();
+        cout << "would you like to see the minimized DFA? (y/n): ";
+        char displayChoice;
+        cin >> displayChoice;
+        if(displayChoice == 'y'){
+            string content = minimizedDFA.toJSON("minimized_dfa");
+            string commandCall = "python display.py";
+            string minimized = "dfa.json";
+            ofstream jsonFile(minimized);
+            if(!jsonFile.is_open()){
+                cout << " Failed to create temporary JSON file!" << endl;
+                return;
+            }
+            jsonFile << content;
+            jsonFile.close();
+            system(commandCall.c_str()); 
+            remove(minimized.c_str());
+        }
         remove(tempFile.c_str());
         remove("minimized.json");
         cout << "Do you want to save this minimized DFA to database? (y/n): ";
@@ -1901,9 +1940,29 @@ void handleUserInputForMenu() {
                     if(!input){
                         cerr << "error : cannot open dfa.json";
                     }
+                    pauseAndClear();
                     json j;
                     input >> j;
                     dfa.extractFromJson(j);
+                    cout << "Converted DFA details:" << endl;
+                    dfa.getDetails();
+                    cout << "Would you like to see the converted DFA? (y/n): ";
+                    char displayChoice;
+                    cin >> displayChoice;
+                    if(displayChoice == 'y') {
+                        string content = dfa.toJSON("convereted dfa");
+                        string commandCall = "python display.py";
+                        string dfaFile = "dfa.json";
+                        ofstream dfaJsonFile(dfaFile);
+                        if(!dfaJsonFile.is_open()){
+                            cout << " Failed to create temporary JSON file!" << endl;
+                            return;
+                        }
+                        dfaJsonFile << content;
+                        dfaJsonFile.close();
+                        system(commandCall.c_str());
+                        remove(dfaFile.c_str());
+                    }
                     remove(tempFile.c_str());
                     remove("dfa_output.json");
                     pauseAndClear();

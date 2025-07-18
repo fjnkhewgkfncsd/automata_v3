@@ -86,7 +86,3 @@ if __name__ == "__main__":
     with open("dfa_output.json", "w") as f:
         json.dump(result, f, indent=2)
     print("Converted NFA to DFA successfully!")
-    print_automaton(dfa_states, initial_state, dfa_finals, dfa_transitions, "Converted DFA")    
-    show_png = input("Would you like to show the visualization? (y/n): ").lower()
-    if show_png == 'y':
-            display_automaton(dfa_states, initial_state, dfa_finals, dfa_transitions, "DFA")
