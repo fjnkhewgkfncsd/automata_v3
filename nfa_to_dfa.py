@@ -85,4 +85,3 @@ if __name__ == "__main__":
     }  
     with open("dfa_output.json", "w") as f:
         json.dump(result, f, indent=2)
-    print("Converted NFA to DFA successfully!")

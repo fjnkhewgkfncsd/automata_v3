@@ -14,13 +14,11 @@ def insert_fa(json_file, db_config):
         
         # Extract basic info
         fa_name = fa_data.get('name', 'Unnamed')
-        fa_type = fa_data.get('type', 'DFA')  # ✅ FIXED: Get type from JSON
+        fa_type = fa_data.get('type', 'DFA') 
         num_states = fa_data.get('numOfStates', 0)
         num_alphabet = fa_data.get('numOfAlphabet', 0)
         num_accepting = fa_data.get('numOfAcceptingStates', 0)
         start_state_name = fa_data.get('startState', '')
-        
-        print(f"Inserting {fa_type}: {fa_name}")  # Debug info
         
         # 1. Insert main automaton record with type
         cursor.execute("""
@@ -29,7 +27,6 @@ def insert_fa(json_file, db_config):
         """, (fa_name, fa_type, num_states, num_alphabet, num_accepting))
         
         automaton_id = cursor.lastrowid
-        print(f"Created automaton with ID: {automaton_id}")
         
         # 2. Insert states
         state_ids = {}
@@ -100,7 +97,6 @@ def insert_fa(json_file, db_config):
         
         # Commit all changes
         db.commit()
-        print(f"✅ {fa_type} '{fa_name}' saved successfully with {transition_count} transitions.")
         
         cursor.close()
         db.close()
@@ -300,10 +296,8 @@ if __name__ == "__main__":
             
             result = insert_fa(json_file, db_config)
             if result is not None:
-                print("SUCCESS")
                 sys.exit(0)
             else:
-                print("FAILED")
                 sys.exit(1)
         except Exception as e:
             print(f"ERROR: {e}")

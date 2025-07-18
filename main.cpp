@@ -26,7 +26,7 @@ void clearScreen() {
 }
 
 void pauseAndClear() {
-    cout << "\nPress Enter to continue...";
+    cout << "\n\033[38;5;196mPress Enter to continue...\033[0m";
     cin.ignore();
     cin.get();
     clearScreen();
@@ -69,15 +69,15 @@ class FiniteAutoMaton {
                     continue;
                 }
                 if(state ==startState){
-                    cout << state +"* ";
+                    cout <<"\033[38;5;220m"<< state +"* "<<"\033[0m";
                 }else{
-                    cout << state << " ";
+                    cout <<"\033[38;5;220m"<< state <<"\033[0m";
                 }
             }
         }
         virtual void displaySymbol(){
             for(const char symbol : alphabets){
-                cout << symbol << " ";
+                cout <<"\033[38;5;220m"<< symbol << "\033[0m" << " ";
             }
         }
         virtual void addStates(string& state){
@@ -111,14 +111,14 @@ class FiniteAutoMaton {
             numOfAcceptingStates = num;
         }
         virtual void displayStartState() const {
-            cout << "Start State: " << startState << endl;
+            cout << "\033[1;32mStart State: \033[0m\033[38;5;220m" << startState << "\033[0m" << endl;
         }
         virtual int getNumOfAcceptingState(){
             return numOfAcceptingStates;
         }
         map<int,string> listAvailableFA(){
             string command = "python db_operation.py list";
-            cout << " Loading available finite automata..." << endl;
+            cout << "\033[1;32m Loading available finite automata...\033[0m" << endl;
             sleepFor(2000);
             clearScreen();
             map<int,string> faTypes;
@@ -148,12 +148,10 @@ class FiniteAutoMaton {
                 }
 
                 // Print clean header
-                cout << "\n Available Finite Automata:" << endl;
-                cout << string(50, '=') << endl;
-                cout << left << setw(6) << "ID" << "| " 
-                    << setw(8) << "Type" << "| "
-                    << "Name" << endl;
-                cout << string(50, '=') << endl;
+                cout << "\n\033[1;36m          Available Finite Automata\033[0m" << endl;
+                cout <<"\033[35m"<< string(43, '=')<<"\033[0m" << endl;
+                cout << "\033[35m|\033[0m \033[1;31mID   \033[0m| \033[1;31mType   \033[0m| \033[1;31mName\033[0m" << string(50 - 3, ' ') << "\033[35m|\033[0m\n";
+                cout <<"\033[35m"<< string(43, '=')<<"\033[0m" << endl;
 
                 // Find array bounds
                 size_t arrayStart = result.find('[', automataStart);
@@ -181,13 +179,18 @@ class FiniteAutoMaton {
                         faTypes[id] = type.empty() ? "DFA" : type; // Default to DFA if empty
                     }
                     // Print clean formatted row
-                    cout << left << setw(6) << idStr << "| "
-                        << setw(8) << type << "| "
-                        << name << endl;
+                    cout << "\033[35m|\033[0m" // left border in magenta
+                    << "\033[32m" << setw(6) << left << idStr << "\033[0m"
+                    << "\033[35m|\033[0m"
+                    << "\033[33m" << setw(8) << left << type << "\033[0m"
+                    << "\033[35m|\033[0m"
+                    << "\033[34m" << setw(25) << left << name << "\033[0m"
+                    << "\033[35m|\033[0m"
+                    << endl;
 
                     pos = endPos + 1;
                 }
-                cout << string(50, '=') << endl;
+                cout <<"\033[35m"<< string(43, '=')<<"\033[0m" << endl;
                 
             } catch (const exception& e) {
                 cout << " Error parsing response: " << e.what() << endl;
@@ -522,25 +525,25 @@ class DFA : public FiniteAutoMaton {
         }
         void displayAcceptingStates() const {
             for(const auto& state : acceptingStates){
-                cout << state << " "; 
+                cout << "\033[38;5;220m" << state << "\033[0m" << " ";
             }
         }
 
         void getDetails(){
-            cout << "States : ";
+            cout << "\033[1;32mStates : \033[0m";
             displayState();
             cout << endl;
             displayStartState();
-            cout << "Symbols : " ;
+            cout << "\033[1;32mSymbols : \033[0m";
             displaySymbol();
             cout << endl;
-            cout << "Accepting states : ";
+            cout << "\033[1;32mAccepting states : \033[0m";
             displayAcceptingStates();
             displayTransitions();
         }
         void saveToDatabase() override {
             string dfaName;
-            cout << "Enter a name for this DFA: ";
+            cout << "\033[38;5;202mEnter a name for this DFA: \033[0m";
             cin >> dfaName;
             
             // Create JSON file
@@ -557,8 +560,8 @@ class DFA : public FiniteAutoMaton {
             
             // Execute Python script
             string command = "python db_operation.py insert " + tempFile;
-            cout << " Saving DFA to database..." << endl;
-            
+            cout << "\033[1;32m Saving DFA to database...\033[0m" << endl;
+
             // Use simple system() call instead of popen
             int result = system(command.c_str());
             
@@ -567,18 +570,17 @@ class DFA : public FiniteAutoMaton {
             
             // Just check the result
             if (result == 0) {
-                cout << " DFA '" << dfaName << "' saved to database successfully!" << endl;
+                cout << "\033[1;32m DFA '" << dfaName << "' saved to database successfully!\033[0m" << endl;
             } else {
-                cout << " Failed to save DFA to database!" << endl;
+                cout << "\033[1;31m Failed to save DFA to database!\033[0m" << endl;
             }
-            pauseAndClear();
         }
         
         void loadFromDatabase(int id) override {
             string tempFile = "temp_dfa_load.json";
             string command = "python db_operation.py load " + to_string(id) + " " + tempFile;
             
-            cout << "Loading DFA from database (ID: " << id << ")..." << endl;
+            cout << "\033[38;2;255;105;180mLoading DFA from database (ID: " << id << ")...\033[0m" << endl;
             
             int result = system(command.c_str());
             
@@ -588,45 +590,45 @@ class DFA : public FiniteAutoMaton {
                 if (checkFile.good()) {
                     checkFile.close();
                     if (fromJSON(tempFile)) {
-                        cout << " DFA loaded successfully from database!" << endl;
+                        cout << "\033[92m DFA loaded successfully from database!\033[0m" << endl;
+                        cout << "\033[93m Notice: The start state is marked with an asterisk (*)\033[0m" << endl;
                         displayTransitions();
                     } else {
-                        cout <<  " Failed to parse loaded DFA data!" << endl;
+                        cout <<  "\033[1;31m Failed to parse loaded DFA data!\033[0m" << endl;
                     }
                     
                     remove(tempFile.c_str());
                 } else {
-                    cout << " DFA with ID " << id << " not found in database!" << endl;
+                    cout << "\033[1;31m DFA with ID " << id << " not found in database!\033[0m" << endl;
                 }
             } else {
-                cout << " Error loading DFA from database!" << endl;
+                cout << "\033[1;31m Error loading DFA from database!\033[0m" << endl;
             }
         }
         
         bool simulate(const string& input) override {
             string currentState = startState;
-            cout << " Simulating input: '" << input << "'" << endl;
-            cout << "  Start state: " << currentState << endl;
-            
+            cout << "\033[38;5;117m Simulating input: \033[0m'" <<"\033[38;5;220m"<< input <<"\033[0m" << "'" << endl;
+            cout << "\033[38;5;117m  Start state: \033[0m" << "\033[38;5;220m"<<currentState << "\033[0m" << endl;
+
             for (char symbol : input) {
                 if (alphabets.find(symbol) == alphabets.end()) {
-                    cout << " Symbol '" << symbol << "' not in alphabet!" << endl;
+                    cout << "\033[1;31m Symbol '" << symbol << "' not in alphabet!\033[0m" << endl;
                     return false;
                 }
                 
                 auto transition = transitions.find({currentState, symbol});
                 if (transition == transitions.end()) {
-                    cout << " No transition from " << currentState << " with symbol " << symbol << endl;
+                    cout << "\033[1;31m No transition from " << currentState << " with symbol " << symbol << "\033[0m" << endl;
                     return false;
                 }
                 
-                cout << "   " << currentState << " --" << symbol << "--> " << transition->second << endl;
+                cout << "   \033[1;32m" << currentState<<"\033[0m" <<"\033[1;33m"<< " --" << symbol << "--> " <<"\033[0m"<<"\033[1;31m"<< transition->second <<"\033[0m"<< endl;
                 currentState = transition->second;
             }
             
             bool accepted = acceptingStates.find(currentState) != acceptingStates.end();
-            cout << " Final state: " << currentState;
-            cout << " (" << (accepted ? " ACCEPTED" : " REJECTED") << ")" << endl;
+            cout << "\033[38;5;117m Final state: \033[0m \033[38;5;220m" << currentState<< "\033[0m";
             return accepted;
         }
         
@@ -634,15 +636,15 @@ class DFA : public FiniteAutoMaton {
             transitions[{from, symbol}] = to;
         }
         void displayTransitions() override {
-            cout << "\n Transition Table:" << endl;
-            cout << "-------------------" << endl;
+            cout << "\n\033[1;36m Transition Table:\033[0m" << endl;
+            cout << "\033[1;35m-------------------\033[0m" << endl;
             for (const auto& transition : transitions) {
                 if(transition.first.first ==startState ){
-                    cout << transition.first.first + "*" << " --" << transition.first.second 
-                        << "--> " << transition.second << endl;
+                    cout <<"\033[1;32m" <<transition.first.first + "*"<<"\033[0m" <<"\033[1;33m"<< " --" << transition.first.second 
+                        << "--> "<<"\033[0m" <<"\033[1;31m"<< transition.second << "\033[0m" << endl;
                 }else{
-                    cout << transition.first.first << " --" << transition.first.second 
-                    << "--> " << transition.second << endl;
+                    cout <<"\033[1;32m" <<transition.first.first <<"\033[0m" <<"\033[1;33m"<< " --" << transition.first.second 
+                        << "--> "<<"\033[0m" <<"\033[1;31m"<< transition.second << "\033[0m" << endl;
                 }
             }
             cout << endl;
@@ -745,50 +747,65 @@ class DFA : public FiniteAutoMaton {
             return result;
         }
         void handleInputForDFA(){
-            cout << "======== Designing DFA =========" << endl;
-            cout << "Enter number of states : ";
+            cout << "\033[1;36m======== Designing DFA =========\033[0m" << endl;
             int numState;
-            cin >> numState;
+            do{
+                cout << "\033[38;5;202mEnter number of states : \033[0m";
+                cin >> numState;
+                if(numState < 1){
+                    cout << "\033[38;5;226mError: Invalid number of states.\033[0m" << endl;
+                }
+            } while(numState < 1);
             numOfStates = numState;
             for(int i = 0 ; i < numOfStates ; i++){
                 string state = "q"+ to_string(i);
                 addStates(state);
             }
             int numAlphabet;
-            cout << "Enter number of symbols in alphabet : ";
-            cin >> numAlphabet;
+            do{
+                cout << "\033[38;5;202mEnter number of symbols in alphabet : \033[0m";
+                cin >> numAlphabet;
+                if(numAlphabet < 1){
+                    cout << "\033[38;5;226mError: Invalid number of symbols.\033[0m" << endl;
+                }
+            }while(numAlphabet < 1);
             numOfAlphabet = numAlphabet;
             for(int i = 0 ; i < numOfAlphabet ; i++){
                 char symbol;
-                cout << "Enter symbol "<< i+1 << ": ";
+                cout << "\033[38;5;202mEnter symbol "<< i+1 << ": \033[0m";
                 cin >> symbol;
                 addSymbol(symbol);
             } 
-            cout << "You have " <<numOfStates << " states there're ";
+            cout << "\033[1;32mYou have " <<numOfStates << " states there're ";
             displayState(); 
             cout <<" and "<< numOfAlphabet << " symbols there're ";
             displaySymbol();
-            cout <<"in your DFA."<<endl;
+            cout <<"in your DFA.\033[0m"<<endl;
             string startstate;
             do{
-                cout << "Enter start state : ";
+                cout << "\033[38;5;202mEnter start state : \033[0m";
                 cin >> startstate;
                 if(states.find(startstate) == states.end()){
-                    cout << "Error : Start state must be one of the defined states."<<endl;
+                    cout << "\033[38;5;226mError : Start state must be one of the defined states.\033[0m"<<endl;
                 }
             }while(states.find(startstate) == states.end());
             startState = startstate;
             int acceptingState;
-            cout << "Enter number of accepting states : ";
-            cin >> acceptingState;
+            do{
+                cout << "\033[38;5;202mEnter number of accepting states : \033[0m";
+                cin >> acceptingState;
+                if(acceptingState < 1){
+                    cout << "\033[38;5;226mError: Invalid number of accepting states.\033[0m" << endl;
+                }
+            }while(acceptingState < 1);
             numOfAcceptingStates = acceptingState ;
             for(int i =0 ; i < numOfAcceptingStates ; i++){
                 string acceptingState;
                 do{
-                    cout << "Enter accepting states " << i+1 << " : ";
+                    cout << "\033[38;5;202mEnter accepting states " << i+1 << " : \033[0m";
                     cin >> acceptingState;
                     if(states.find(acceptingState) == states.end()){
-                        cout << "Error: Accepting state must be one of the defined states." << endl;
+                        cout << "\033[38;5;226mError: Accepting state must be one of the defined states.\033[0m" << endl;
                     } 
                 }while(states.find(acceptingState) == states.end());  
                 addAcceptingStates(acceptingState);
@@ -797,10 +814,10 @@ class DFA : public FiniteAutoMaton {
                 for(const auto& alphabet : alphabets){
                     string toState;
                     do{
-                        cout << "Enter transition from state "<<state << " with symbol "<<alphabet << " to state : ";
+                        cout << "\033[38;5;202mEnter transition from state "<<state << " with symbol "<<alphabet << " to state : \033[0m";
                         cin >> toState;
                         if(states.find(toState)==states.end()){
-                            cout << "Error: Transition state must be one of the defined states."<<endl;
+                            cout << "\033[38;5;226mError: Transition state must be one of the defined states.\033[0m"<<endl;
                         }
                     }while(states.find(toState) == states.end());
                     addTransition(state, alphabet, toState);
@@ -808,24 +825,24 @@ class DFA : public FiniteAutoMaton {
             }
             
             // ✅ ADDED: Test the DFA and offer to save to database
-            cout << "\n DFA created successfully!" << endl;
+            cout << "\n\033[1;32m DFA created successfully!\033[0m" << endl;
             displayTransitions();
             pauseAndClear();
             // Test the DFA
             char testChoice;
-            cout << "\n🧪 Do you want to test the DFA? (y/n): ";
+            cout << "\n\033[38;5;202m Do you want to test the DFA? (y/n): \033[0m";
             cin >> testChoice;
             if(testChoice == 'y' || testChoice == 'Y') {
                 string testInput;
                 do {
-                    cout << "Enter a string to test (or 'quit' to stop): ";
+                    cout << "\033[38;5;202mEnter a string to test (or 'quit' to stop): \033[0m";
                     cin >> testInput;
                     if(testInput != "quit") {
                         cout << "\n" << string(30, '-') << endl;
                         if(simulate(testInput)) {
-                            cout << "🎉 ACCEPTED!" << endl;
+                            cout << "\033[32m ACCEPTED!\033[0m" << endl;
                         } else {
-                            cout << "💥 REJECTED!" << endl;
+                            cout << "\033[31m REJECTED!\033[0m" << endl;
                         }
                         cout << string(30, '-') << endl;
                     }
@@ -835,7 +852,7 @@ class DFA : public FiniteAutoMaton {
                 pauseAndClear();
             // Save to database
             char saveChoice;
-            cout << "\n Do you want to save this DFA to database? (y/n): ";
+            cout << "\n \033[38;5;202mDo you want to save this DFA to database? (y/n): \033[0m";
             cin >> saveChoice;
             if(saveChoice == 'y' || saveChoice == 'Y') {
                 saveToDatabase();
@@ -1093,11 +1110,11 @@ class NFA : public FiniteAutoMaton {
                 numOfStates = states.size();
                 numOfAlphabet = alphabets.size();
                 numOfAcceptingStates = acceptingStates.size();
-                
-                cout << " NFA loaded - " << numOfStates << " states, " 
-                    << numOfAlphabet << " symbols, " << numOfAcceptingStates 
-                    << " accepting states" << endl;
-                
+
+                cout << "\033[1;32m NFA loaded - " << numOfStates << " states, "
+                    << numOfAlphabet << " symbols, " << numOfAcceptingStates
+                    << " accepting states\033[0m" << endl;
+
                 return true;
             } catch (...) {
                 cout << " Error parsing NFA JSON file" << endl;
@@ -1107,7 +1124,7 @@ class NFA : public FiniteAutoMaton {
         
         void saveToDatabase() override {
             string nfaName;
-            cout << "Enter a name for this NFA: ";
+            cout << "\033[38;5;202mEnter a name for this NFA: \033[0m";
             cin >> nfaName;
             
             // Create JSON file
@@ -1116,7 +1133,7 @@ class NFA : public FiniteAutoMaton {
             
             ofstream jsonFile(tempFile);
             if (!jsonFile.is_open()) {
-                cout << "❌ Failed to create temporary JSON file!" << endl;
+                cout << " Failed to create temporary JSON file!" << endl;
                 return;
             }
             jsonFile << jsonData;
@@ -1124,26 +1141,25 @@ class NFA : public FiniteAutoMaton {
             
             // Call Python script (same as DFA)
             string command = "python db_operation.py insert " + tempFile;
-            cout << " Saving NFA to database..." << endl;
-            
+            cout << "\033[1;32m Saving NFA to database...\033[0m" << endl;
+
             int result = system(command.c_str());
             
             // Cleanup temporary file
             remove(tempFile.c_str());
             
             if (result == 0) {
-                cout << " NFA '" << nfaName << "' saved to database successfully!" << endl;
+                cout << "\033[1;32m NFA '" << nfaName << "' saved to database successfully!\033[0m" << endl;
             } else {
-                cout << " Failed to save NFA to database!" << endl;
+                cout << "\033[38;5;196m Failed to save NFA to database!\033[0m" << endl;
             }
-            pauseAndClear();
         }
         
         void loadFromDatabase(int id) override {
             string tempFile = "temp_nfa_load.json";
             string command = "python db_operation.py load " + to_string(id) + " " + tempFile;
             
-            cout << " Loading NFA from database (ID: " << id << ")..." << endl;
+            cout << "\033[38;2;255;105;180m Loading NFA from database (ID: " << id << ")...\033[0m" << endl;
             sleepFor(1000);
             clearScreen();
             int result = system(command.c_str());
@@ -1153,7 +1169,7 @@ class NFA : public FiniteAutoMaton {
                 if (checkFile.good()) {
                     checkFile.close();
                     if (fromJSON(tempFile)) {
-                        cout << " NFA loaded successfully from database!" << endl;
+                        cout << "\033[92m NFA loaded successfully from database!\033[0m" << endl;
                         displayTransitions();
                     } else {
                         cout << " Failed to parse loaded NFA data!" << endl;
@@ -1171,10 +1187,10 @@ class NFA : public FiniteAutoMaton {
     // Start with epsilon closure of start state
     set<string> currentStates = epsilonClosure({startState});
     
-    cout << " Simulating NFA with input: '" << input << "'" << endl;
-    cout << " Start state(s) after epsilon closure: {";
+    cout << "\033[1;32m Simulating NFA with input: \033[0m \033[38;5;220m'" << input << "'\033[0m" << endl;
+    cout << "\033[1;32m Start state(s) after epsilon closure: {";
     printStateSet(currentStates);
-    cout << "}" << endl;
+    cout << "}\033[0m" << endl;
     
     // Process each symbol in the input
     for (size_t i = 0; i < input.length(); i++) {
@@ -1182,34 +1198,42 @@ class NFA : public FiniteAutoMaton {
         
         // Check if symbol is in alphabet
         if (alphabets.find(symbol) == alphabets.end()) {
-            cout << " Symbol '" << symbol << "' not in alphabet!" << endl;
+            cout << "\033[38;5;196m Symbol '" << symbol << "' not in alphabet!\033[0m" << endl;
             return false;
         }
-        
+
+        // Print transition flow
+        cout << "\033[1;36mStep " << (i+1) << ": On symbol '" << symbol << "' from state(s): {";
+        printStateSet(currentStates);
+        cout << "}";
+
         // Get all possible next states
         set<string> nextStates;
         for (const string& state : currentStates) {
             auto transition = transitions.find({state, symbol});
             if (transition != transitions.end()) {
-                // Add all destination states
                 for (const string& toState : transition->second) {
-                    if (toState != "nt") {  // Skip "no transition" states
+                    if (toState != "nt") {
                         nextStates.insert(toState);
                     }
                 }
             }
         }
-        
+
         // Apply epsilon closure to all next states
-        currentStates = epsilonClosure(nextStates);
-        
-        cout << " Step " << (i + 1) << ": '" << symbol << "' -> {";
-        printStateSet(currentStates);
-        cout << "}" << endl;
-        
+        set<string> afterEpsilon = epsilonClosure(nextStates);
+
+        cout << "  \033[1;33m Next state(s) before epsilon: {";
+        printStateSet(nextStates);
+        cout << "}  after epsilon: {";
+        printStateSet(afterEpsilon);
+        cout << "}\033[0m" << endl;
+
+        currentStates = afterEpsilon;
+
         // If no states reachable, reject
         if (currentStates.empty()) {
-            cout << " No transitions available - REJECTED!" << endl;
+            cout << "\033[38;5;220m No transitions available - REJECTED!\033[0m" << endl;
             return false;
         }
     }
@@ -1222,23 +1246,23 @@ class NFA : public FiniteAutoMaton {
             break;
         }
     }
-    
-    cout << " Final state(s): {";
+
+    cout << "\033[1;32m Final state(s): {";
     printStateSet(currentStates);
-    cout << "}" << endl;
-    cout << " Result: " << (accepted ? " ACCEPTED" : " REJECTED") << endl;
-    
+    cout << "}\033[0m" << endl;
+    cout << "\033[1;32m Result: \033[0m" << (accepted ? " \033[1;32mACCEPTED\033[0m " : "\033[1;31m REJECTED\033[0m") << endl;
     return accepted;
 }
-void listAvailableNFA(){
+set<int> listAvailableNFA(){
     string command = "python db_operation.py listNFA";
-    cout << " loading available NFA..."<< endl;
+    cout << "\033[38;2;255;105;180m loading available NFA...\033[0m" << endl;
     sleepFor(2000);
     clearScreen();
+    set<int> idSet;
     FILE* pipe = popen(command.c_str(), "r");
     if (!pipe) {
-        cout << " Failed to run command!" << endl;
-        return;
+        cout << "\033[38;5;196m Failed to run command!\033[0m" << endl;
+        return idSet;
     }
     char buffer[128];
     string result;
@@ -1248,23 +1272,21 @@ void listAvailableNFA(){
     pclose(pipe);
 
     if(result.find("EMPTY") != string::npos){
-        cout << "No NFA in Database." <<endl;
-        return;
+        cout << "\033[38;5;220mNo NFA in Database.\033[0m" <<endl;
+        return idSet;
     }
     try{
         size_t automataStart = result.find("\"automata\":");
         if (automataStart == string::npos) {
-            cout << " Error: Could not find automata array in response" << endl;
-            return ;
+            cout << "\033[38;5;220m Error: Could not find automata array in response\033[0m" << endl;
+            return idSet;
         }
 
         // Print clean header
-        cout << "\n Available NFA:" << endl;
-        cout << string(50, '=') << endl;
-        cout << left << setw(6) << "ID" << "| " 
-            << setw(8) << "Type" << "| "
-            << "Name" << endl;
-        cout << string(50, '=') << endl;
+        cout << "\n\033[1;36m          Available Finite Automata\033[0m" << endl;
+        cout <<"\033[35m"<< string(43, '=')<<"\033[0m" << endl;
+        cout << "\033[35m|\033[0m \033[1;31mID   \033[0m| \033[1;31mType   \033[0m| \033[1;31mName\033[0m" << string(50 - 30, ' ') << "\033[35m|\033[0m\n";
+        cout <<"\033[35m"<< string(43, '=')<<"\033[0m" << endl;
 
         // Find array bounds
         size_t arrayStart = result.find('[', automataStart);
@@ -1272,7 +1294,7 @@ void listAvailableNFA(){
         
         if (arrayStart == string::npos || arrayEnd == string::npos) {
             cout << " Error: Invalid JSON format" << endl;
-            return ;
+            return idSet;
         }
         string jsonArray = result.substr(arrayStart + 1, arrayEnd - arrayStart - 1);
         size_t pos = 0;
@@ -1286,73 +1308,56 @@ void listAvailableNFA(){
             string idStr = extractField(item, "id");
             string type = extractField(item, "type");
             string name = extractField(item, "name");
+            idSet.insert(stoi(idStr));
             // Print clean formatted row
-            cout << left << setw(6) << idStr << "| "
-                << setw(8) << type << "| "
-                << name << endl;
+            cout << "\033[35m|\033[0m" // left border in magenta
+                    << "\033[32m" << setw(6) << left << idStr << "\033[0m"
+                    << "\033[35m|\033[0m"
+                    << "\033[33m" << setw(8) << left << type << "\033[0m"
+                    << "\033[35m|\033[0m"
+                    << "\033[34m" << setw(25) << left << name << "\033[0m"
+                    << "\033[35m|\033[0m"
+                    << endl;
 
             pos = endPos + 1;
         }
-        cout << string(50, '=') << endl;
+        cout <<"\033[35m"<< string(43, '=')<<"\033[0m" << endl;
+        return idSet;
     }catch(const exception& e) {
-        cout << " Error parsing NFA list: " << e.what() << endl;
+        cout << "\033[38;5;220m Error parsing NFA list: \033[0m" << endl;
     }
 }
 // Helper function to compute epsilon closure
 set<string> epsilonClosure(const set<string>& states) {
-    cout << "DEBUG: Computing epsilon closure for: {";
-    for (const string& s : states) cout << s << " ";
-    cout << "}" << endl;
-    
     set<string> closure = states; // Start with input states
     bool changed = true;
     int iterations = 0;
     const int MAX_ITERATIONS = 100;
-    
-    cout << "DEBUG: Initial closure: {";
-    for (const string& s : closure) cout << s << " ";
-    cout << "}" << endl;
     
     while (changed && iterations < MAX_ITERATIONS) {
         changed = false;
         set<string> newStates = closure;
         iterations++;
         
-        cout << "DEBUG: Iteration " << iterations << endl;
-        
         for (const string& state : closure) {
             if (isAllowEpsilonTransitions) {
-                cout << "DEBUG: Checking epsilon transitions from " << state << endl;
                 
                 // Check for epsilon transitions
                 auto epsilonTrans = transitions.find({state, 'e'});
                 if (epsilonTrans != transitions.end()) {
-                    cout << "DEBUG: Found epsilon transitions from " << state << ": ";
                     for (const string& epsilonState : epsilonTrans->second) {
-                        cout << epsilonState << " ";
                         if (epsilonState != "nt" && newStates.find(epsilonState) == newStates.end()) {
                             newStates.insert(epsilonState);
                             changed = true;
-                            cout << "(ADDED) ";
                         }
                     }
                     cout << endl;
-                } else {
-                    cout << "DEBUG: No epsilon transitions from " << state << endl;
                 }
             }
         }
         
         closure = newStates;
-        cout << "DEBUG: Closure after iteration " << iterations << ": {";
-        for (const string& s : closure) cout << s << " ";
-        cout << "}" << endl;
     }
-    
-    cout << "DEBUG: Final epsilon closure: {";
-    for (const string& s : closure) cout << s << " ";
-    cout << "}" << endl;
-    
     return closure;
 }
 
@@ -1374,8 +1379,8 @@ void printStateSet(const set<string>& states) {
             transitions[{from, symbol}].insert(to);
         }
         void displayTransitions() override{
-            cout << "\n transition Table" << endl;
-            cout << "-------------------" << endl;
+            cout << "\n\033[1;36mTransition Table\033[0m" << endl;
+            cout << "\033[1;35m-------------------\033[0m" << endl;
             for (const auto& transition : transitions) {
                 const string& fromState = transition.first.first;
                 char symbol = transition.first.second;
@@ -1387,34 +1392,34 @@ void printStateSet(const set<string>& states) {
                         break;
                     }else{
                         if(fromState == startState){
-                            cout << fromState + "*" << " --" << symbol << "--> " << toState << endl;
+                            cout <<"\033[1;32m"<< fromState + "*"<<"\033[0m" <<"\033[1;33m"<< " --" << symbol << "--> " <<"\033[0m"<<"\033[1;31m"<< toState << "\033[0m"<<endl;
                         }else{
-                            cout << fromState << " --" << symbol << "--> " << toState << endl;
+                            cout <<"\033[1;32m"<< fromState <<"\033[0m" <<"\033[1;33m"<< " --" << symbol << "--> " <<"\033[0m"<<"\033[1;31m"<< toState << "\033[0m"<<endl;
                         }
                     }
                 }
             }
         }
         void handleInputForNFA(){
-            cout << "======== Designing NFA ========="<<endl;
+            cout << "\033[1;36m======== Designing NFA =========\033[0m"<<endl;
             bool isValid = false;
             do{
-                cout << "Is this NFA have epsilon transitions?(y/n): ";
+                cout << "\033[38;5;202mIs this NFA have epsilon transitions?(y/n): \033[0m";
                 char choice;
                 cin >> choice;
                 if(choice == 'y' || choice == 'n'){
                     isValid = true;
                     isAllowEpsilonTransitions = choice == 'y' ? true : false;
                 }else{
-                    cout << "Error: Invalid choice. Please enter y or n."<<endl;
+                    cout << "\033[38;5;226mError: Invalid choice. Please enter y or n.\033[0m"<<endl;
                 }
             }while(!isValid);
             int numStates;
             do{
-                cout << "Enter number of states : ";
+                cout << "\033[38;5;202mEnter number of states : \033[0m";
                 cin >> numStates;
                 if(numStates <= 0){
-                    cout << "Error: Number of states must be greater than 0."<< endl;
+                    cout << "\033[38;5;226mError: Number of states must be greater than 0.\033[0m"<< endl;
                 }
             }while(numStates <= 0);
             numOfStates = numStates;
@@ -1426,51 +1431,51 @@ void printStateSet(const set<string>& states) {
             }
             int numAlphabet;
             do{
-                cout << "Enter number of symbols : ";
+                cout << "\033[38;5;202mEnter number of symbols : \033[0m";
                 cin >> numAlphabet;
                 if(numAlphabet <= 0){
-                    cout << "Error: Number of symbols must be greater than 0." << endl;
+                    cout << "\033[38;5;226mError: Number of symbols must be greater than 0.\033[0m" << endl;
                 }
             }while(numAlphabet <=0 );
             numOfAlphabet = numAlphabet;
             for(int i = 0 ; i < numOfAlphabet ; i++){
                 char symbol;
-                cout << "Enter symbol " << i+1 << ": ";
+                cout << "\033[38;5;202mEnter symbol " << i+1 << ": \033[0m";
                 cin >> symbol;
                 addSymbol(symbol);
             }
             sleepFor(1000);
             clearScreen();
-            cout << "You have " << numOfStates << " states there're ";
+            cout << "\033[1;32mYou have " << numOfStates << " states there're ";
             displayState();
             cout << " and " << numOfAlphabet << " symbols there're ";
             displaySymbol();
-            cout << "in your NFA." << endl;
+            cout << "in your NFA.\033[0m" << endl;
             string state_state;
             do{
-                cout << "Enter start state : ";
+                cout << "\033[38;5;202mEnter start state : \033[0m";
                 cin >> state_state;
                 if(states.find(state_state)== states.end()){
-                    cout << "Error: Start state must be one of the defined states." << endl;
+                    cout << "\033[38;5;226mError: Start state must be one of the defined states.\033[0m" << endl;
                 }
             }while(states.find(state_state) == states.end());
             startState = state_state;
             int numOfAcc;
             do{
-                cout << "Enter number of accepting states : ";
+                cout << "\033[38;5;202mEnter number of accepting states : \033[0m";
                 cin >> numOfAcc;
                 if(numOfAcc <= 0){
-                    cout << "Error: Number of accepting states must be greater than 0."<< endl;
+                    cout << "\033[38;5;226mError: Number of accepting states must be greater than 0.\033[0m"<< endl;
                 }
             }while(numOfAcc <= 0);
             numOfAcceptingStates = numOfAcc;
             for(int i = 0 ;i < numOfAcceptingStates ; i++){
                 string acceptingState;
                 do{
-                    cout << "Enter accepting state " << i+1 << ": ";
+                    cout << "\033[38;5;202mEnter accepting state " << i+1 << ": \033[0m";
                     cin >> acceptingState;
                     if(states.find(acceptingState) == states.end()){
-                        cout << "Error: Accepting state must be one of the defined states." << endl;
+                        cout << "\033[38;5;226mError: Accepting state must be one of the defined states.\033[0m" << endl;
                     }
                 }while(states.find(acceptingState) == states.end());
                 addAcceptingStates(acceptingState);
@@ -1484,15 +1489,15 @@ void printStateSet(const set<string>& states) {
                             if(state =="nt"){
                                 break;
                             }
-                            cout << "Enter transition from state "<<state << " with symbol "<<alphabet << " to state (if no transition enter \"nt\"): ";
+                            cout << "\033[38;5;202mEnter transition from state "<<state << " with symbol "<<alphabet << " to state (if no transition enter \"nt\"): \033[0m";
                             cin >> toState;
                             if(states.find(toState)==states.end()){
-                                cout << "Error: Transition state must be one of the defined states."<<endl;
+                                cout << "\033[38;5;226mError: Transition state must be one of the defined states.\033[0m"<<endl;
                             }
                         }while(states.find(toState) == states.end());
                         addTransition(state, alphabet, toState);
                         if(state != "nt"){
-                            cout << "is there any more transition from state " << state << " with symbol " << alphabet << "? (y/n): ";
+                            cout << "\033[38;5;202mis there any more transition from state " << state << " with symbol " << alphabet << "? (y/n): \033[0m";
                         cin >> addmore;
                         }
                     }while(addmore=='y');
@@ -1502,12 +1507,12 @@ void printStateSet(const set<string>& states) {
             clearScreen();
             if(isAllowEpsilonTransitions) {
                 addSymbol('e');
-                cout << "\n--- Adding Epsilon Transitions (ep) ---" << endl;
+                cout << "\n\033[1;36m--- Adding Epsilon Transitions (ep) ---\033[0m" << endl;
                 for(const auto& state : states){
                     if(state == "nt") continue;
                     
                     char hasEpsilon;
-                    cout << "Does state " << state << " have epsilon transitions? (y/n): ";
+                    cout << "\033[38;5;202mDoes state " << state << " have epsilon transitions? (y/n): \033[0m";
                     cin >> hasEpsilon;
                     
                     if(hasEpsilon == 'y' || hasEpsilon == 'Y') {
@@ -1515,45 +1520,45 @@ void printStateSet(const set<string>& states) {
                         while(addMore == 'y') {
                             string toState;
                             do{
-                                cout << "Enter epsilon transition from " << state << " to state: ";
+                                cout << "\033[38;5;202mEnter epsilon transition from " << state << " to state: \033[0m";
                                 cin >> toState;
                                 if(states.find(toState) == states.end()){
-                                    cout << "Error: Transition state must be one of the defined states." << endl;
+                                    cout << "\033[38;5;226mError: Transition state must be one of the defined states.\033[0m" << endl;
+                                    cout << "\033[1;32m";
                                     displayState();
-                                    cout << endl;
+                                    cout << "\033[0m" << endl;
                                 }
                             }while(states.find(toState) == states.end());
                             
                             addTransition(state, 'e', toState);
-                            cout << "✅ Added epsilon transition: " << state << " --epsilon--> " << toState << endl;
-                            
-                            cout << "Add another epsilon transition from " << state << "? (y/n): ";
+                            cout << "\033[1;32m Added epsilon transition: \033[0m"<<"\033[38;5;226m" << state << " --epsilon--> " << toState << "\033[0m" << endl;
+                            cout << "\033[38;5;202mAdd another epsilon transition from " << state << "? (y/n): \033[0m";
                             cin >> addMore;
                         }
                     }
                 }
             }
-            cout << "\n NFA created successfully!" << endl;
+            cout << "\n \033[1;32mNFA created successfully!\033[0m" << endl;
             displayTransitions();
             pauseAndClear();
-            cout << "\n Do you want to test this NFA? (y/n): ";
+            cout << "\n\033[38;5;202mDo you want to test this NFA? (y/n): \033[0m";
             char testChoice;
             cin >> testChoice;
             if(testChoice == 'y'){
                 string testInput;
                 do {
-                    cout << "Enter a string to test (or 'quit' to stop): ";
+                    cout << "\033[38;5;202mEnter a string to test (or 'quit' to stop): \033[0m";
                     cin >> testInput;
                     if(testInput != "quit") {
-                        cout << "\n" << string(30, '-') << endl;
+                        cout <<"\033[1;36m"<< "\n" << string(30, '-')<<"\033[0m" << endl;
                         simulate(testInput);
-                        cout << string(30, '-') << endl;
+                        cout <<"\033[1;36m"<< string(30, '-') << "\033[0m" << endl;
                     }
                 } while(testInput != "quit");
             }
             pauseAndClear();
             char saveChoice;
-            cout << "\n Do you want to save this NFA to database? (y/n): ";
+            cout << "\n\033[38;5;202mDo you want to save this NFA to database? (y/n): \033[0m";
             cin >> saveChoice;
             if(saveChoice == 'y' || saveChoice == 'Y') {
                 saveToDatabase();
@@ -1562,46 +1567,55 @@ void printStateSet(const set<string>& states) {
 };
 
 void menu() {
-    // clearScreen();
-    cout << "\n" << string(40, '=') << endl;
-    cout << "     FINITE AUTOMATON SIMULATOR" << endl;
-    cout << string(40, '=') << endl;
-    cout << " 1. Design a FA" << endl;
-    cout << " 2. Simulate a FA from Database" << endl;
-    cout << " 3. Convert NFA to DFA" << endl;
-    cout << " 4. Check type of FA" << endl;
-    cout << " 5. Minimize DFA" << endl;
-    cout << " 0. Exit" << endl;
-    cout << string(40, '=') << endl;
-    cout << "Please enter your choice: ";
+    clearScreen();
+    cout << "\n\033[1;35m========================================\033[0m\n";
+    cout << "\033[1;35m|                                      |\033[0m\n";
+    cout << "\033[1;35m|   \033[1;36mFINITE AUTOMATON SIMULATOR         \033[1;35m|\033[0m\n";
+    cout << "\033[1;35m|                                      |\033[0m\n";
+    cout << "\033[1;35m========================================\033[0m\n";
+    cout << "\033[1;35m| \033[31m1.\033[0m \033[34mDesign a FA                       \033[1;35m|\033[0m\n";
+    cout << "\033[1;35m| \033[31m2.\033[0m \033[34mSimulate a FA from database       \033[1;35m|\033[0m\n";
+    cout << "\033[1;35m| \033[31m3.\033[0m \033[34mConvert NFA to DFA                \033[1;35m|\033[0m\n";
+    cout << "\033[1;35m| \033[31m4.\033[0m \033[34mCheck type of FA                  \033[1;35m|\033[0m\n";
+    cout << "\033[1;35m| \033[31m5.\033[0m \033[34mMinimize DFA                      \033[1;35m|\033[0m\n";
+    cout << "\033[1;35m| \033[91m0.\033[0m \033[94mExit                              \033[1;35m|\033[0m\n";
+    cout << "\033[1;35m========================================\033[0m\n";
+    cout << "\033[38;5;202mPlease enter your choice :\033[0m";
 }
 
 void designMenu() {
     clearScreen();
-    cout << "\n" << string(40, '-') << endl;
-    cout << "        Design Finite Automaton" << endl;
-    cout << string(40, '-') << endl;
-    cout << " 1. Create DFA" << endl;
-    cout << " 2. Create NFA" << endl;
-    cout << " 0. Back to main menu" << endl;
-    cout << "Please enter your choice: ";
+    cout << "\n\033[1;35m" << string(40, '=') <<"\033[0m"<< endl;
+    cout << "\033[1;35m|                                      |\033[0m" << endl;
+    cout << "\033[1;35m|\033[0m";
+    cout << "\033[1;36m        Design Finite Automaton\033[0m       \033[1;35m|\033[0m" << endl;
+    cout << "\033[1;35m|                                      |\033[0m" << endl;
+    cout << "\033[1;35m" << string(40, '=') <<"\033[0m"<< endl;
+    cout << "\033[1;35m|";
+    cout << "\033[31m 1.\033[0m \033[34mCreate DFA\033[0m                        \033[1;35m|\033[0m" << endl;
+    cout << "\033[1;35m|";
+    cout << "\033[31m 2.\033[0m \033[34mCreate NFA\033[0m                        \033[1;35m|\033[0m" << endl;
+    cout << "\033[1;35m|";
+    cout << "\033[91m 0.\033[0m \033[94mBack to main menu\033[0m                 \033[1;35m|\033[0m" << endl;
+    cout << "\033[1;35m" << string(40, '=') <<"\033[0m"<< endl;
+    cout << "\033[38;5;202mPlease enter your choice: \033[0m";
 }
 
 void checkTypeMenu(){
-    cout << "===== Check FA type from Database ======"<<endl;
+    cout << "\033[1;36m===== Check FA type from Database ======\033[0m"<<endl;
     DFA temp;
     map<int,string> faTypes = temp.listAvailableFA();
 
     if(faTypes.empty()){
-        cout << " No Finite Automata available in the database!" << endl;
+        cout << "\033[38;5;220m No Finite Automata available in the database!\033[0m" << endl;
         return;
     }
-    cout << "Enter FA ID to load: ";
+    cout << "\033[38;5;202mEnter FA ID to load: \033[0m";
     int id;
     cin >> id;
 
     if(faTypes.find(id)==faTypes.end()){
-        cout << " Invalid FA ID! Please choose from the available IDs." << endl;
+        cout << "\033[38;5;220m Invalid FA ID! Please choose from the available IDs.\033[0m" << endl;
         return;
     }
 
@@ -1610,17 +1624,17 @@ void checkTypeMenu(){
 
     // Load as NFA first (since NFA can handle both types)
     fa = new NFA();
-    cout << " Loading FA for type analysis..." << endl;
-    
+    cout << "\033[1;32m Loading FA for type analysis...\033[0m" << endl;
+
     fa->loadFromDatabase(id);
     
     // Cast to NFA for detailed analysis
     NFA* nfa = static_cast<NFA*>(fa);
-    
-    cout << "\n Analyzing FA Structure..." << endl;
+
+    cout << "\n\033[1;36m Analyzing FA Structure...\033[0m" << endl;
     sleepFor(2000);
-    cout << "================================" << endl;
-    
+    cout << "\033[35m================================\033[0m" << endl;
+
     // Get NFA transitions for analysis
     auto& nfaTransitions = nfa->getNFATransitions();
     
@@ -1629,56 +1643,56 @@ void checkTypeMenu(){
     bool hasMissingTransitions = false;
     
     // Step 1: Check for epsilon transitions
-    cout << " Step 1: Checking for epsilon transitions..." << endl;
+    cout << "\033[38;2;255;105;180m Step 1: Checking for epsilon transitions...\033[0m" << endl;
     sleepFor(1500);
     for(const auto& transition : nfaTransitions) {
         if(transition.first.second == 'e') {
             hasEpsilonTransitions = true;
-            cout << "    Found epsilon transition: " 
-                 << transition.first.first << " --e--> ";
+            cout << "\033[1;34m    Found epsilon transition: \033[0m" 
+                <<"\033[1;32m"<< transition.first.first<<"\033[0m\033[1;33m" << " --e--> " << "\033[0m";
             for(const string& to : transition.second) {
-                cout << to << " ";
+                cout <<"\033[1;31m"<< to << "\033[0m ";
             }
             cout << endl;
         }
     }
     
     if(hasEpsilonTransitions) {
-        cout << " RESULT: This is an NFA (has epsilon transitions)" << endl;
+        cout << "\033[1;32m RESULT: This is an NFA (has epsilon transitions)\033[0m" << endl;
         delete fa;
         pauseAndClear();
         return;
     }
-    cout << "    No epsilon transitions found" << endl;
+    cout << "\033[1;34m    No epsilon transitions found\033[0m" << endl;
     
     // Step 2: Check for multiple transitions from same state with same symbol
-    cout << "\n Step 2: Checking for nondeterministic transitions..." << endl;
+    cout << "\n\033[38;2;255;105;180m Step 2: Checking for nondeterministic transitions...\033[0m" << endl;
     sleepFor(1500);
     for(const auto& transition : nfaTransitions) {
         if(transition.second.size() > 1) {
             hasMultipleTransitions = true;
-            cout << "    Found multiple transitions: " 
-                 << transition.first.first << " --" << transition.first.second << "--> {";
+            cout << "\033[1;34m    Found multiple transitions: \033[0m" 
+                <<"\033[1;32m"<< transition.first.first<<"\033[0m\033[1;33m" << " --" << transition.first.second << "--> \033[0m{" <<"\033[1;31m";
             bool first = true;
             for(const string& to : transition.second) {
                 if(!first) cout << ", ";
                 cout << to;
                 first = false;
             }
-            cout << "} (" << transition.second.size() << " destinations)" << endl;
+            cout << "}\033[0m \033[38;5;220m (" << transition.second.size() << " destinations)\033[0m" << endl;
         }
     }
     
     if(hasMultipleTransitions) {
-        cout << " RESULT: This is an NFA (has nondeterministic transitions)" << endl;
+        cout << "\033[1;32m RESULT: This is an NFA (has nondeterministic transitions)\033[0m" << endl;
         delete fa;
         pauseAndClear();
         return;
     }
-    cout << "    No multiple transitions found" << endl;
+    cout << "\033[1;34m    No multiple transitions found\033[0m" << endl;
     
     // Step 3: Check for missing transitions (incomplete DFA)
-    cout << "\n Step 3: Checking for missing transitions..." << endl;
+    cout << "\n\033[38;2;255;105;180m Step 3: Checking for missing transitions...\033[0m" << endl;
     sleepFor(1500);
     set<string> states = fa->getStates();
     set<char> alphabet = fa->getAlphabet();
@@ -1707,66 +1721,64 @@ void checkTypeMenu(){
                     actualTransitions++;
                 } else {
                     hasMissingTransitions = true;
-                    cout << "     Missing transition: δ(" << state << ", " << symbol << ") = undefined" << endl;
+                    cout << "\033[1;34m     Missing transition: δ(" << state << ", " << symbol << ") = undefined\033[0m" << endl;
                 }
             } else {
                 hasMissingTransitions = true;
-                cout << "     Missing transition: δ(" << state << ", " << symbol << ") = undefined" << endl;
+                cout << "\033[1;34m     Missing transition: δ(" << state << ", " << symbol << ") = undefined\033[0m" << endl;
             }
         }
     }
     
     if(hasMissingTransitions) {
-        cout << " RESULT: This is an NFA (incomplete - has missing transitions)" << endl;
-        cout << "   Expected transitions: " << expectedTransitions << endl;
-        cout << "   Actual transitions: " << actualTransitions << endl;
+        cout << "\033[1;32m RESULT: This is an NFA (incomplete - has missing transitions)\033[0m" << endl;
+        cout << "\033[1;32m   Expected transitions: \033[0m\033[1;31m" << expectedTransitions <<"\033[0m"<< endl;
+        cout << "\033[1;32m   Actual transitions: \033[0m\033[1;31m" << actualTransitions << "\033[0m" << endl;
         delete fa;
         pauseAndClear();
         return;
     }
-    cout << "    All transitions are defined" << endl;
-    
+    cout << "\033[1;32m    All transitions are defined\033[0m" << endl;
+
     // Step 4: Final determination
-    cout << "\n Step 4: Final analysis..." << endl;
+    cout << "\n\033[38;2;255;105;180m Step 4: Final analysis...\033[0m" << endl;
     sleepFor(1500);
-    cout << "    No epsilon transitions" << endl;
-    cout << "    No multiple transitions per state-symbol pair" << endl;
-    cout << "    All transitions are defined" << endl;
-    cout << "    Exactly one transition per state-symbol pair" << endl;
-    
-    cout << "\n RESULT: This is a DFA (Deterministic Finite Automaton)" << endl;
-    
+    cout << "\033[1;32m    No epsilon transitions\033[0m" << endl;
+    cout << "\033[1;32m    No multiple transitions per state-symbol pair\033[0m" << endl;
+    cout << "\033[1;32m    All transitions are defined\033[0m" << endl;
+    cout << "\033[1;32m    Exactly one transition per state-symbol pair\033[0m" << endl;
+
+    cout << "\n\033[1;32m RESULT: This is a DFA (Deterministic Finite Automaton)\033[0m" << endl;
+
     // Display comprehensive analysis
-    cout << "\n Detailed Analysis:" << endl;
-    cout << "================================" << endl;
-    cout << "Type: DFA" << endl;
-    cout << "States: " << states.size() << endl;
-    cout << "Alphabet symbols: " << alphabet.size() << endl;
-    cout << "Total transitions: " << actualTransitions << endl;
-    cout << "Completeness: Complete" << endl;
-    cout << "Determinism: Deterministic" << endl;
+    cout << "\n\033[1;36m Detailed Analysis:\033[0m" << endl;
+    cout << "\033[1;35m================================\033[0m" << endl;
+    cout << "\033[1;32mType: DFA\033[0m" << endl;
+    cout << "\033[1;32mStates: \033[0m\033[1;31m" << states.size() << "\033[0m" << endl;
+    cout << "\033[1;32mAlphabet symbols: \033[0m\033[1;31m" << alphabet.size() << "\033[0m" << endl;
+    cout << "\033[1;32mTotal transitions: \033[0m\033[1;31m" << actualTransitions << "\033[0m" << endl;
+    cout << "\033[1;32mCompleteness: \033[0m\033[1;31mComplete\033[0m" << endl;
+    cout << "\033[1;32mDeterminism: \033[0m\033[1;31mDeterministic\033[0m" << endl;
     pauseAndClear();
     delete fa;
 }
 void simulateMenu() {
-    cout << "\n=== Simulate a FA from Database ===" << endl;
-    
+    cout << "\n\033[1;36m===== Simulate a FA from Database ===\033[0m" << endl;
     DFA tempDFA;
     map<int,string> faTypes = tempDFA.listAvailableFA();
 
     if(faTypes.empty()){
-        cout << " No Finite Automata available in the database!" << endl;
+        cout << "\033[1;33m No Finite Automata available in the database!\033[0m" << endl;
         return;
     }
-    cout << "\nEnter FA ID to load: ";
     int id;
-    cin >> id;
-
-    if (faTypes.find(id) == faTypes.end()) {
-        cout << " Invalid FA ID! Please choose from the available IDs." << endl;
-        return;
-    }
-
+    do{
+        cout << "\033[38;5;202m\nEnter FA ID to load: \033[0m";
+        cin >> id;
+        if (faTypes.find(id) == faTypes.end()) {
+                cout << "\033[1;31m Invalid FA ID! Please choose from the available IDs.\033[0m" << endl;
+        }
+    }while(faTypes.find(id) == faTypes.end());
     string faType = faTypes[id];
     FiniteAutoMaton* fa = nullptr;
 
@@ -1778,29 +1790,18 @@ void simulateMenu() {
     clearScreen();
     fa->loadFromDatabase(id);
 
-    
-    // Test the loaded FA
-    char testChoice;
-    cout << "\n Do you want to test this FA? (y/n): ";
-    cin >> testChoice;
-    
-    if(testChoice == 'y' || testChoice == 'Y') {
-        string testInput;
-        do {
-            cout << "Enter a string to test (or 'quit' to stop): ";
-            cin >> testInput;
-            if(testInput != "quit") {
-                cout << "\n" << string(30, '-') << endl;
-                if(fa->simulate(testInput)) {
-                    cout << " ACCEPTED!" << endl;
-                } else {
-                    cout << " REJECTED!" << endl;
-                }
-                cout << string(30, '-') << endl;
+    string testInput;
+    do {
+        cout << "\033[38;5;202mEnter a string to test (or 'quit' to stop): \033[0m";
+        cin >> testInput;
+        if(testInput != "quit") {
+            if(fa->simulate(testInput)) {
+                cout << " \033[92mACCEPTED!\033[0m" << endl;
+            } else {
+                cout << " \033[91mREJECTED!\033[0m" << endl;
             }
-        } while(testInput != "quit");
-    }
-    
+        }
+    } while(testInput != "quit");
     delete fa;
     pauseAndClear();
 }
@@ -1896,12 +1897,12 @@ void handleUserInputForMenu() {
                             break;
                         }
                         case 0:
-                            cout << "Returning to main menu..." << endl;
+                            cout << "\033[1;32mReturning to main menu...\033[0m" << endl;
                             sleepFor(1000);
                             clearScreen();
                             break;
                         default:
-                            cout << " Invalid choice! Please try again." << endl;
+                            cout << "\033[38;5;226mInvalid choice! Please try again.\033[0m" << endl;
                     }
                 } while(designChoice != 0);
                 break;
@@ -1915,24 +1916,30 @@ void handleUserInputForMenu() {
             case 3: {
                 sleepFor(300);
                 clearScreen();
-                cout << "========= Convert NFA to DFA =========" << endl;
+                cout << "\033[1;36m========= Convert NFA to DFA =========\033[0m" << endl;
                 NFA nfa;
-                nfa.listAvailableNFA();
-                cout << "Enter NFA's ID to convert: ";
                 int nfaId;
-                cin >> nfaId;
+                set<int> nfaIds = nfa.listAvailableNFA();
+                do{
+                    cout << "\033[38;5;202mEnter NFA's ID to convert: \033[0m";
+                    cin >> nfaId;
+                    if(nfaIds.find(nfaId) == nfaIds.end()){
+                        cout << "\033[38;5;220m Invalid NFA ID! Please choose from the available IDs.\033[0m" << endl;
+                    }
+                } while(nfaIds.find(nfaId) == nfaIds.end());
+
                 nfa.loadFromDatabase(nfaId);
                 string jsonData = nfa.toJSON("converted_dfa.json");
                 string tempFile = "nfa_input.json";
                 ofstream jsonFile(tempFile);
                 if(!jsonFile.is_open()){
-                    cout << " Failed to create temporary JSON file!" << endl;
+                    cout << "\033[38;5;220m Failed to create temporary JSON file!\033[0m" << endl;
                     return;
                 }
                 jsonFile << jsonData;
                 jsonFile.close();
                 string command = "python nfa_to_dfa.py";
-                cout << " Converting NFA to DFA..." << endl;
+                cout << "\033[38;2;255;105;180m Converting NFA to DFA...\033[0m" << endl;
                 int result = system(command.c_str());
                 if(result == 0) {
                     DFA dfa;
@@ -1944,9 +1951,9 @@ void handleUserInputForMenu() {
                     json j;
                     input >> j;
                     dfa.extractFromJson(j);
-                    cout << "Converted DFA details:" << endl;
+                    cout << "\033[1;36mConverted DFA details:\033[0m" << endl;
                     dfa.getDetails();
-                    cout << "Would you like to see the converted DFA? (y/n): ";
+                    cout << "\033[38;5;202mWould you like to see the converted DFA? (y/n): \033[0m";
                     char displayChoice;
                     cin >> displayChoice;
                     if(displayChoice == 'y') {
@@ -1966,16 +1973,18 @@ void handleUserInputForMenu() {
                     remove(tempFile.c_str());
                     remove("dfa_output.json");
                     pauseAndClear();
-                    cout << "do you want to save this DFA to database? (y/n): ";
+                    cout << "\033[38;5;202mdo you want to save this DFA to database? (y/n): \033[0m";
                     char saveChoice;
                     cin >> saveChoice;
                     if(saveChoice == 'y' || saveChoice == 'Y') {
                         dfa.saveToDatabase();
+                        cout << "\033[38;5;220m DFA saved to database successfully!\033[0m" << endl;
+                        pauseAndClear();
                     }else if(saveChoice == 'n' || saveChoice == 'N') {
                         pauseAndClear();
                     }
                 } else {
-                    cout << " Failed to convert NFA to DFA!" << endl;
+                    cout << "\033[38;5;220m Failed to convert NFA to DFA!\033[0m" << endl;
                 }
                 break;
             }
