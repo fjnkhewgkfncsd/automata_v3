@@ -612,7 +612,8 @@ class DFA : public FiniteAutoMaton {
                     if (fromJSON(tempFile)) {
                         cout << "\033[92m DFA loaded successfully from database!\033[0m" << endl;
                         cout << "\033[93m Notice: The start state is marked with an asterisk (*)\033[0m" << endl;
-                        displayTransitions();
+                        cout << "\033[1;36m DFA Details:\033[0m" << endl;
+                        getDetails();
                     } else {
                         cout <<  "\033[1;31m Failed to parse loaded DFA data!\033[0m" << endl;
                     }
@@ -1205,7 +1206,9 @@ class NFA : public FiniteAutoMaton {
                     checkFile.close();
                     if (fromJSON(tempFile)) {
                         cout << "\033[92m NFA loaded successfully from database!\033[0m" << endl;
-                        displayTransitions();
+                        cout << "\033[93m Notice: The start state is marked with an asterisk (*)\033[0m" << endl;
+                        cout << "\033[1;36m NFA Details:\033[0m" << endl;
+                        getDetails();
                     } else {
                         cout << " Failed to parse loaded NFA data!" << endl;
                     }
@@ -1217,7 +1220,23 @@ class NFA : public FiniteAutoMaton {
                 cout << " Error loading NFA from database!" << endl;
             }
         }
-        
+        void getDetails() {
+            cout << "\033[1;32mStates : \033[0m";
+            displayState();
+            cout << endl;
+            displayStartState();
+            cout << "\033[1;32mSymbols : \033[0m";
+            displaySymbol();
+            cout << endl;
+            cout << "\033[1;32mAccepting states : \033[0m";
+            displayAcceptingStates();
+            displayTransitions();
+        }
+        void displayAcceptingStates() const {
+            for(const auto& state : acceptingStates){
+                cout << "\033[38;5;220m" << state << "\033[0m" << " ";
+            }
+        }
         bool simulate(const string& input) override {
     // Start with epsilon closure of start state
     set<string> currentStates = epsilonClosure({startState});

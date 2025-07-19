@@ -1,0 +1,12 @@
+{
+  "type": "DFA",
+  "name": "minimized_dfa.json",
+  "numOfStates": 2,
+  "numOfAlphabet": 2,
+  "numOfAcceptingStates": 1,
+  "states": ["q0", "q1"],
+  "startState": "q0",
+  "alphabet": ["b", "q"],
+  "acceptingStates": ["q1"],
+  "transitions": [["q0", "b", "q1"], ["q0", "q", "q1"], ["q1", "b", "q1"], ["q1", "q", "q1"]]
+}
