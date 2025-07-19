@@ -47,9 +47,6 @@ int getValidatedInt(const string& prompt) {
         }
     }
 }
-char getValidatedChar(){
-
-}
 void sleepFor(int milliseconds) {
 #ifdef _WIN32
     Sleep(milliseconds);  // Windows - milliseconds
@@ -1364,6 +1361,7 @@ set<int> listAvailableNFA(){
     }catch(const exception& e) {
         cout << "\033[38;5;220m Error parsing NFA list: \033[0m" << endl;
     }
+    return idSet;
 }
 // Helper function to compute epsilon closure
 set<string> epsilonClosure(const set<string>& states) {
