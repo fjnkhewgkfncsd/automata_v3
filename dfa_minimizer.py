@@ -94,5 +94,4 @@ if __name__ == "__main__":
     }
     with open("minimized.json", "w") as f:
         json.dump(result, f, indent=4)
-    print("DFA minimized successfully!")
     

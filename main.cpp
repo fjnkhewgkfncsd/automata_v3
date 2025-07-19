@@ -71,7 +71,7 @@ class FiniteAutoMaton {
                 if(state ==startState){
                     cout <<"\033[38;5;220m"<< state +"* "<<"\033[0m";
                 }else{
-                    cout <<"\033[38;5;220m"<< state <<"\033[0m";
+                    cout <<"\033[38;5;220m"<< state <<" \033[0m";
                 }
             }
         }
@@ -150,7 +150,7 @@ class FiniteAutoMaton {
                 // Print clean header
                 cout << "\n\033[1;36m          Available Finite Automata\033[0m" << endl;
                 cout <<"\033[35m"<< string(43, '=')<<"\033[0m" << endl;
-                cout << "\033[35m|\033[0m \033[1;31mID   \033[0m| \033[1;31mType   \033[0m| \033[1;31mName\033[0m" << string(50 - 3, ' ') << "\033[35m|\033[0m\n";
+                cout << "\033[35m|\033[0m \033[1;31mID   \033[0m| \033[1;31mType   \033[0m| \033[1;31mName\033[0m" << string(50 - 30, ' ') << "\033[35m|\033[0m\n";
                 cout <<"\033[35m"<< string(43, '=')<<"\033[0m" << endl;
 
                 // Find array bounds
@@ -193,9 +193,9 @@ class FiniteAutoMaton {
                 cout <<"\033[35m"<< string(43, '=')<<"\033[0m" << endl;
                 
             } catch (const exception& e) {
-                cout << " Error parsing response: " << e.what() << endl;
+                cout << "\033[38;5;220m Error parsing response: " << e.what() << "\033[0m" << endl;
             } catch (...) {
-                cout << " Unknown error parsing response" << endl;
+                cout << "\033[38;5;220m Unknown error parsing response\033[0m" << endl;
             }
             return faTypes;
         }
@@ -283,12 +283,12 @@ class DFA : public FiniteAutoMaton {
 
         void listAvailableDFA(){
             string command = "python db_operation.py listDFA";
-            cout << "Loading available DFA..." << endl;
+            cout << "\033[38;2;255;105;180mLoading available DFA...\033[0m" << endl;
             sleepFor(2000);
             clearScreen();
             FILE* pipe = popen(command.c_str(), "r");
             if(!pipe){
-                cout << "Failed to execute Python script!" << endl;
+                cout << "\033[38;5;220mFailed to execute Python script!\033[0m" << endl;
                 return;
             }
             char buffer[1024];
@@ -298,23 +298,21 @@ class DFA : public FiniteAutoMaton {
             }
             pclose(pipe);
             if (result.find("EMPTY") != string::npos) {
-                cout << "No DFA found in database." << endl;
+                cout << "\033[38;5;220mNo DFA found in database.\033[0m" << endl;
                 return;
             }
             try {
                 size_t automataStart = result.find("\"automata\":");
                 if (automataStart == string::npos) {
-                    cout << " Error: Could not find automata array in response" << endl;
+                    cout << "\033[38;5;220m Error: Could not find automata array in response\033[0m" << endl;
                     return ;
                 }
 
                 // Print clean header
-                cout << "\n Available DFA:" << endl;
-                cout << string(50, '=') << endl;
-                cout << left << setw(6) << "ID" << "| " 
-                    << setw(8) << "Type" << "| "
-                    << "Name" << endl;
-                cout << string(50, '=') << endl;
+                cout << "\n\033[1;36m Available DFA:\033[0m" << endl;
+                cout <<"\033[35m"<< string(43, '=')<<"\033[0m" << endl;
+                cout << "\033[35m|\033[0m \033[1;31mID   \033[0m| \033[1;31mType   \033[0m| \033[1;31mName\033[0m" << string(50 - 30, ' ') << "\033[35m|\033[0m\n";
+                cout <<"\033[35m"<< string(43, '=')<<"\033[0m" << endl;
 
                 // Find array bounds
                 size_t arrayStart = result.find('[', automataStart);
@@ -337,18 +335,23 @@ class DFA : public FiniteAutoMaton {
                     string type = extractField(item, "type");
                     string name = extractField(item, "name");
                     // Print clean formatted row
-                    cout << left << setw(6) << idStr << "| "
-                        << setw(8) << type << "| "
-                        << name << endl;
+                    cout << "\033[35m|\033[0m" // left border in magenta
+                    << "\033[32m" << setw(6) << left << idStr << "\033[0m"
+                    << "\033[35m|\033[0m"
+                    << "\033[33m" << setw(8) << left << type << "\033[0m"
+                    << "\033[35m|\033[0m"
+                    << "\033[34m" << setw(25) << left << name << "\033[0m"
+                    << "\033[35m|\033[0m"
+                    << endl;
 
                     pos = endPos + 1;
                 }
-                cout << string(50, '=') << endl;
+                cout <<"\033[35m"<< string(43, '=')<<"\033[0m" << endl;
                 
             } catch (const exception& e) {
-                cout << " Error parsing response: " << e.what() << endl;
+                cout << "\033[38;5;220m Error parsing response: " << e.what() << "\033[0m" << endl;
             } catch (...) {
-                cout << " Unknown error parsing response" << endl;
+                cout << "\033[38;5;220m Unknown error parsing response\033[0m" << endl;
             }
             return;
         }
@@ -1807,38 +1810,39 @@ void simulateMenu() {
 }
 
 void minimizeMenu(){
-    cout << "======= Minimize DFA ========"<< endl;
+    cout << "\033[1;36m======= Minimize DFA ========\033[0m" << endl;
     DFA tempDFA;
     tempDFA.listAvailableDFA();
-    cout << "Enter DFA's TD to Minimize: ";
+    cout << "\033[38;5;202mEnter DFA's TD to Minimize: \033[0m";
     int dfaId;
     cin >> dfaId;
+    clearScreen();
     tempDFA.loadFromDatabase(dfaId);
     string jsonData = tempDFA.toJSON("minimized_dfa.json");
     string tempFile = "dfa_input.json";
     ofstream jsonFile(tempFile);
     if(!jsonFile.is_open()){
-        cout << " Failed to create temporary JSON file!" << endl;
+        cout << "\033[38;5;220m Failed to create temporary JSON file!\033[0m" << endl;
         return;
     }
     jsonFile << jsonData;
     jsonFile.close();
     string command = "python dfa_minimizer.py";
-    cout << " Minimizing DFA..." << endl;
+    cout << "\033[38;2;255;105;180m Minimizing DFA... \033[0m" << endl;
     int result = system(command.c_str());
     if(result == 0){
         DFA minimizedDFA;
         ifstream input("minimized.json");
         if(!input){
-            cerr << "error : cannot open minimized_dfa.json";
+            cerr << "\033[38;5;220merror : cannot open minimized_dfa.json\033[0m";
         }
         pauseAndClear();
         json j;
         input >> j;
         minimizedDFA.extractFromJson(j);
-        cout << "Minimized DFA details:" << endl;
+        cout << "\033[1;36mMinimized DFA details:\033[0m" << endl;
         minimizedDFA.getDetails();
-        cout << "would you like to see the minimized DFA? (y/n): ";
+        cout << "\033[38;5;202mwould you like to see the minimized DFA? (y/n): \033[0m";
         char displayChoice;
         cin >> displayChoice;
         if(displayChoice == 'y'){
@@ -1847,7 +1851,7 @@ void minimizeMenu(){
             string minimized = "dfa.json";
             ofstream jsonFile(minimized);
             if(!jsonFile.is_open()){
-                cout << " Failed to create temporary JSON file!" << endl;
+                cout << "\033[38;5;220mFailed to create temporary JSON file!\033[0m" << endl;
                 return;
             }
             jsonFile << content;
@@ -1857,7 +1861,7 @@ void minimizeMenu(){
         }
         remove(tempFile.c_str());
         remove("minimized.json");
-        cout << "Do you want to save this minimized DFA to database? (y/n): ";
+        cout << "\033[38;5;202mDo you want to save this minimized DFA to database? (y/n): \033[0m";
         char saveChoice;
         cin >> saveChoice;
         if(saveChoice == 'y' || saveChoice == 'Y') {
@@ -1866,7 +1870,7 @@ void minimizeMenu(){
             pauseAndClear();
         }
     } else {
-        cout << " Failed to minimize DFA!" << endl;
+        cout << "\033[38;5;220mFailed to minimize DFA!\033[0m" << endl;
     }
 }
 

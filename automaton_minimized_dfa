@@ -1,0 +1,14 @@
+digraph {
+	label="minimized_dfa\n(States: 3, Transitions: 6)" rankdir=LR
+	q2
+	start [label="" shape=none]
+	start -> q2
+	q0 [color=green shape=doublecircle]
+	q1
+	q0 -> q0 [label=a]
+	q0 -> q0 [label=b]
+	q1 -> q1 [label=a]
+	q1 -> q0 [label=b]
+	q2 -> q1 [label=a]
+	q2 -> q2 [label=b]
+}
